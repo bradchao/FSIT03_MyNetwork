@@ -1,6 +1,7 @@
 package tw.brad.app.helloworld.mynetwork;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap bmp;
     private UIHandler handler;
     private File sdroot;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private void init(){
         handler = new UIHandler();
         img = (ImageView)findViewById(R.id.img);
+        progressBar = (ProgressBar)findViewById(R.id.progressBar);
 
         sdroot = Environment.getExternalStorageDirectory();
     }
@@ -114,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test3(View view){
+        progressBar.setVisibility(View.VISIBLE);
         new Thread(){
             @Override
             public void run() {
@@ -134,9 +139,10 @@ public class MainActivity extends AppCompatActivity {
                     bin.close();
                     bout.flush();
                     bout.close();
-                    Toast.makeText(MainActivity.this, "Save OK", Toast.LENGTH_SHORT).show();
+                    handler.sendEmptyMessage(1);
                 } catch (Exception e) {
-                    Log.i("brad", e.toString());
+                    Log.i("brad", "e:" + e.toString());
+                    handler.sendEmptyMessage(1);
                 }
             }
         }.start();
@@ -149,7 +155,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            img.setImageBitmap(bmp);
+            switch (msg.what){
+                case 0: img.setImageBitmap(bmp); break;
+                case 1:
+                    Toast.makeText(MainActivity.this, "Save OK", Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
+                    break;
+            }
+
         }
     }
 
