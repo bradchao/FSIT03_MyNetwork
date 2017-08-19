@@ -16,9 +16,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -110,7 +114,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test3(View view){
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    File savePDF = new File(sdroot, "url.pdf");
+                    BufferedOutputStream bout =
+                            new BufferedOutputStream(new FileOutputStream(savePDF));
 
+                    URL url = new URL(
+                            "http://pdfmyurl.com/?url=http://www.gamer.com.tw");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.connect();
+                    BufferedInputStream bin = new BufferedInputStream(conn.getInputStream());
+                    byte[] buf = new byte[4096]; int len = 0;
+                    while ( (len = bin.read(buf)) != -1){
+                        bout.write(buf, 0, len);
+                    }
+                    bin.close();
+                    bout.flush();
+                    bout.close();
+                    Toast.makeText(MainActivity.this, "Save OK", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.i("brad", e.toString());
+                }
+            }
+        }.start();
     }
     public void test4(View view){
 
