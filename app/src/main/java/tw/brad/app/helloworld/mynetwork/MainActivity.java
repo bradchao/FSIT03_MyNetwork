@@ -2,9 +2,12 @@ package tw.brad.app.helloworld.mynetwork;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -30,12 +33,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ImageView img;
     private Bitmap bmp;
     private UIHandler handler;
-    private File sdroot;
+    private File sdroot, savePDF;
     private ProgressBar progressBar;
 
     @Override
@@ -123,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    File savePDF = new File(sdroot, "url.pdf");
+                    savePDF = new File(sdroot, "url.pdf");
                     BufferedOutputStream bout =
                             new BufferedOutputStream(new FileOutputStream(savePDF));
 
@@ -142,13 +146,30 @@ public class MainActivity extends AppCompatActivity {
                     handler.sendEmptyMessage(1);
                 } catch (Exception e) {
                     Log.i("brad", "e:" + e.toString());
-                    handler.sendEmptyMessage(1);
+                    handler.sendEmptyMessage(2);
                 }
             }
         }.start();
     }
     public void test4(View view){
-
+        new Thread(){
+            @Override
+            public void run() {
+                
+                try {
+                    MultipartUtility mu =
+                            new MultipartUtility(
+                                    "http://10.0.2.2:7080/brad2101/Brad11", "UTF-8", "");
+                    mu.addFilePart("upload", savePDF);
+                    List<String> ret = mu.finish();
+                    for (String line: ret){
+                        Log.i("brad", line);
+                    }
+                }catch(Exception e){
+                    Log.i("brad", e.toString());
+                }
+            }
+        }.start();
     }
 
     private class UIHandler extends Handler {
@@ -160,10 +181,31 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     Toast.makeText(MainActivity.this, "Save OK", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
+                    //showPDF();
+                    break;
+                case 2:
+                    Toast.makeText(MainActivity.this, "Save Fail", Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
                     break;
             }
 
         }
     }
+
+    private void showPDF(){
+        Intent it = new Intent(Intent.ACTION_VIEW);
+        it.setDataAndType(Uri.fromFile(savePDF), "application/pdf");
+        it.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+
+        Intent intent2 = Intent.createChooser(it, "Open File");
+        try {
+            startActivity(intent2);
+        } catch (ActivityNotFoundException e) {
+            Log.i("brad", e.toString());
+            // Instruct the user to install a PDF reader here, or something
+        }
+        //startActivity(it);
+    }
+
 
 }
